@@ -1,7 +1,6 @@
 import csv
 import logging
 import os
-from typing import List, Dict, Any
 
 from flask import Flask, jsonify, request
 from pymongo import MongoClient, ASCENDING
@@ -44,7 +43,7 @@ def read_csv_file_stream(filename: str):
 
 @app.route('/load_to_db')
 def load_csvs_to_db():
-    data_folder_path = os.path.abspath(DATA_FILES_PATH)
+    data_folder_path = os.getcwd() + DATA_FILES_PATH
     if not os.path.exists(data_folder_path):
         return jsonify({'error': 'Data folder does not exist'}), 400
 
