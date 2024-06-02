@@ -21,7 +21,8 @@ app = Flask(__name__)
 app.logger.setLevel(logging.INFO)
 
 # MongoDB connection
-client = MongoClient("mongodb+srv://segevngr:pass123@cluster0.lwqch8m.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+MONGO_URI = os.getenv('MONGO_URI')
+client = MongoClient(MONGO_URI)
 db = client['weather_db']
 collection = db['weather_collection']
 
