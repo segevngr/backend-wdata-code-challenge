@@ -7,7 +7,7 @@ from pymongo import MongoClient, ASCENDING
 from pymongo.errors import PyMongoError
 
 # Relative path to the dir which holds the CSV files
-DATA_FILES_PATH = '\data\\'
+DATA_FILES_PATH = '/data'
 
 # Determines what's the max rows of data to be stored in memory at once
 BUFFER_SIZE = 10000
