@@ -10,7 +10,7 @@ from pymongo.errors import PyMongoError
 DATA_FILES_PATH = '/data'
 
 # Determines what's the max rows of data to be stored in memory at once
-BUFFER_SIZE = 10000
+BUFFER_SIZE = 100000
 
 # Data column names
 LATITUDE_COLUMN = "Latitude"
@@ -51,25 +51,31 @@ def load_csvs_to_db():
     if not csv_files:
         return jsonify({'error': 'No CSV files found in the folder'}), 400
 
-    app.logger.info("Writing data to DB...")
     try:
+        app.logger.info("Writing data to db...")
         for csv_file in csv_files:
             csv_file_path = os.path.join(data_folder_path, csv_file)
             csv_data_generator = read_csv_file_stream(csv_file_path)
             buffer = []
+            buffer_count = 0
 
             for row in csv_data_generator:
                 buffer.append(row)
                 if len(buffer) >= BUFFER_SIZE:
                     collection.insert_many(buffer)
                     buffer = []
+                    buffer_count += 1
+                    app.logger.info(f'Wrote {buffer_count*BUFFER_SIZE} rows to db')
 
             # Insert any remaining rows in the buffer
             if buffer:
                 collection.insert_many(buffer)
-        app.logger.info("Finished Writing data to DB")
+        app.logger.info("Finished Writing to db")
 
+        app.logger.info(f'Indexing db...')
         collection.create_index([(LONGITUDE_COLUMN, ASCENDING), (LATITUDE_COLUMN, ASCENDING)])
+        app.logger.info(f'Finished Indexing db')
+
         return jsonify({'message': 'Weather data stored in db successfully'})
 
     except PyMongoError as e:
@@ -111,7 +117,7 @@ def weather_insight():
             if condition == "veryHot":
                 condition_met = temp > VERY_HOT_THRESHOLD
             else:
-                condition_met = COLD_AND_RAINY_TEMP_THRESHOLD < 10 and RAIN_THRESHOLD_MM > 0.5
+                condition_met = temp < COLD_AND_RAINY_TEMP_THRESHOLD and precipitation > RAIN_THRESHOLD_MM
 
             response.append({'forecastTime': time, 'conditionMet': condition_met})
 
