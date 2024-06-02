@@ -10,7 +10,7 @@ https://wdata-task.onrender.com/weather/insight?lon=51.5&lat=24.5&condition=rain
 https://wdata-task.onrender.com/load_to_db
 
 Possible Pitfalls/Optimizations:
-1. Async - In my implementation the operation of writing to the db (collection.insert_many(buffer)) is taken place synchronously.
+1. Async - In my implementation, the operation of writing to the db (collection.insert_many(buffer)) is taken place synchronously.
    In a real-life production-ready environment, using asynchronous writes can significantly enhance performance by leveraging the database's multiprocessing capabilities.
 2. Buffer Size - In the task i've used an arbitrary buffer size (100k).
    Increasing the buffer size to match the available RAM on the machine can improve performance by reducing the number of interactions with MongoDB, thereby minimizing time lost to latency issues.
