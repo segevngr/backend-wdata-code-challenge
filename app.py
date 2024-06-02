@@ -45,7 +45,7 @@ def read_csv_file_stream(filename: str):
 def load_csvs_to_db():
     data_folder_path = os.getcwd() + DATA_FILES_PATH
     if not os.path.exists(data_folder_path):
-        return jsonify({'error': 'Data folder does not exist'}), 400
+        return jsonify({'error': f'Data folder path does not exist: {data_folder_path}'}), 400
 
     csv_files = [f for f in os.listdir(data_folder_path) if f.endswith('.csv')]
     if not csv_files:
