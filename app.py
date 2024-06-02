@@ -7,7 +7,11 @@ from flask import Flask, jsonify, request
 from pymongo import MongoClient, ASCENDING
 from pymongo.errors import PyMongoError
 
+# Relative path to the dir which holds the CSV files
 DATA_FILES_PATH = '\data\\'
+
+# Determines what's the max rows of data to be stored in memory at once
+BUFFER_SIZE = 10000
 
 # Data column names
 LATITUDE_COLUMN = "Latitude"
@@ -16,6 +20,10 @@ TIME_COLUMN = "forecast_time"
 TEMP_CELSIUS_COLUMN = "Temperature Celsius"
 PRECIPITATION_MM_COLUMN = "Precipitation Rate mm/hr"
 PRECIPITATION_IN_COLUMN = "Precipitation Rate in/hr"
+
+VERY_HOT_THRESHOLD = 30
+COLD_AND_RAINY_TEMP_THRESHOLD = 10
+RAIN_THRESHOLD_MM = 0.5
 
 app = Flask(__name__)
 app.logger.setLevel(logging.INFO)
@@ -27,13 +35,11 @@ db = client['weather_db']
 collection = db['weather_collection']
 
 
-def read_csv_file(filename: str) -> List[Dict[str, Any]]:
-    data = []
+def read_csv_file_stream(filename: str):
     with open(filename, 'r') as file:
         reader = csv.DictReader(file)
         for row in reader:
-            data.append(row)
-    return data
+            yield row
 
 
 @app.route('/load_to_db')
@@ -50,8 +56,19 @@ def load_csvs_to_db():
     try:
         for csv_file in csv_files:
             csv_file_path = os.path.join(data_folder_path, csv_file)
-            csv_data = read_csv_file(csv_file_path)
-            collection.insert_many(csv_data)
+            csv_data_generator = read_csv_file_stream(csv_file_path)
+            buffer = []
+
+            for row in csv_data_generator:
+                buffer.append(row)
+                if len(buffer) >= BUFFER_SIZE:
+                    collection.insert_many(buffer)
+                    buffer = []
+
+            # Insert any remaining rows in the buffer
+            if buffer:
+                collection.insert_many(buffer)
+        app.logger.info("Finished Writing data to DB")
 
         collection.create_index([(LONGITUDE_COLUMN, ASCENDING), (LATITUDE_COLUMN, ASCENDING)])
         return jsonify({'message': 'Weather data stored in db successfully'})
@@ -93,9 +110,9 @@ def weather_insight():
                 precipitation = float(result[PRECIPITATION_MM_COLUMN])
 
             if condition == "veryHot":
-                condition_met = temp > 30
+                condition_met = temp > VERY_HOT_THRESHOLD
             else:
-                condition_met = temp < 10 and precipitation > 0.5
+                condition_met = COLD_AND_RAINY_TEMP_THRESHOLD < 10 and RAIN_THRESHOLD_MM > 0.5
 
             response.append({'forecastTime': time, 'conditionMet': condition_met})
 
