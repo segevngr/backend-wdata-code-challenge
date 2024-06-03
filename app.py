@@ -43,7 +43,6 @@ def read_csv_file_stream(filename: str):
 
 @app.route('/load_to_db')
 def load_csvs_to_db():
-    return jsonify(MONGO_URI)
     data_folder_path = os.getcwd() + DATA_FILES_PATH
     if not os.path.exists(data_folder_path):
         return jsonify({'error': f'Data folder path does not exist: {data_folder_path}'}), 400
