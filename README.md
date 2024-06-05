@@ -10,6 +10,8 @@ https://wdata-task.onrender.com/weather/insight?lon=51.5&lat=24.5&condition=rain
 
 https://wdata-task.onrender.com/load_to_db
 
+https://wdata-task.onrender.com/clear_db
+
 Possible Pitfalls/Optimizations:
 1. Improve RAM Utilization
    - Background:
