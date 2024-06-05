@@ -23,7 +23,7 @@ RAIN_THRESHOLD_MM = 0.5
 DATA_FILES_PATH = '/data'
 
 # Size of the data chunks to be read\write separately
-BUFFER_SIZE = 50000
+BUFFER_SIZE = 100000
 
 CSV_ROW_COUNT = 259201
 
@@ -49,17 +49,18 @@ def read_csv_from_row(file_path, start_row):
 
 
 # Read a chunk from the CSV and write it to the db
-async def read_csv_and_write_to_db(csv_file_path: str, start_row: int):
-    csv_data_generator = read_csv_from_row(csv_file_path, start_row)
-    rows = []
-    for _ in range(BUFFER_SIZE):
-        try:
-            rows.append(next(csv_data_generator))
-        except StopIteration:
-            break
+async def read_csv_and_write_to_db(semaphore, csv_file_path: str, start_row: int):
+    async with semaphore:
+        csv_data_generator = read_csv_from_row(csv_file_path, start_row)
+        rows = []
+        for _ in range(BUFFER_SIZE):
+            try:
+                rows.append(next(csv_data_generator))
+            except StopIteration:
+                break
 
-    await collection.insert_many(rows)
-    app.logger.info(f"Wrote {len(rows)} rows to db")
+        await collection.insert_many(rows)
+        app.logger.info(f"Wrote {len(rows)} rows to db")
 
 
 # Generates asynchronous tasks lists for reading the CSVs and writing them to Mongo db
@@ -68,12 +69,13 @@ def generate_read_and_write_tasks(data_folder_path):
     if not csv_files:
         return {'error': 'No CSV files found in the folder'}, 400
 
+    semaphore = asyncio.Semaphore(4)
     tasks = []
     for csv_file in csv_files:
         csv_file_path = os.path.join(data_folder_path, csv_file)
         start_row = 0
         while start_row < CSV_ROW_COUNT:
-            tasks.append(asyncio.create_task(read_csv_and_write_to_db(csv_file_path, start_row)))
+            tasks.append(asyncio.create_task(read_csv_and_write_to_db(semaphore, csv_file_path, start_row)))
             start_row += BUFFER_SIZE
 
     return tasks
