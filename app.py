@@ -23,7 +23,7 @@ RAIN_THRESHOLD_MM = 0.5
 DATA_FILES_PATH = '/data'
 
 # Size of the data chunks to be read\write separately
-BUFFER_SIZE = 100000
+BUFFER_SIZE = 50000
 
 CSV_ROW_COUNT = 259201
 
@@ -59,7 +59,7 @@ async def read_csv_and_write_to_db(csv_file_path: str, start_row: int):
             break
 
     await collection.insert_many(rows)
-    # app.logger.info(f"Wrote {len(rows)} rows to db")
+    app.logger.info(f"Wrote {len(rows)} rows to db")
 
 
 # Generates asynchronous tasks lists for reading the CSVs and writing them to Mongo db
