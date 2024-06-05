@@ -59,7 +59,7 @@ async def read_csv_and_write_to_db(csv_file_path: str, start_row: int):
             break
 
     await collection.insert_many(rows)
-    app.logger.info(f"Wrote {len(rows)} rows to db")
+    # app.logger.info(f"Wrote {len(rows)} rows to db")
 
 
 # Generates asynchronous tasks lists for reading the CSVs and writing them to Mongo db
